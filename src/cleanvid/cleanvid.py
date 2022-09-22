@@ -243,6 +243,7 @@ class VidCleaner(object):
 
         if not self.cleanSubsFileSpec:
             self.cleanSubsFileSpec = subFileParts[0] + "_clean" + subFileParts[1]
+            self.cleanFullSubsFileSpec = subFileParts[0] + "_clean_full" + subFileParts[1]
 
         if not self.edlFileSpec:
             cleanSubFileParts = os.path.splitext(self.cleanSubsFileSpec)
@@ -264,6 +265,8 @@ class VidCleaner(object):
 
         subs = pysrt.open(self.tmpSubsFileSpec)
         newSubs = pysrt.SubRipFile()
+        if self.fullSubs:
+            newFullSubs = pysrt.SubRipFile()
         newTimestampPairs = []
 
         # for each subtitle in the set
@@ -305,6 +308,9 @@ class VidCleaner(object):
                 newSub = sub
                 newSub.text = newText
                 newSubs.append(newSub)
+                # if full subs were requested
+                if self.fullSubs:
+                    newFullSubs.append(newSub)
                 if subScrubbed:
                     prevNaughtySub = sub
                     newTimes = [
@@ -316,11 +322,13 @@ class VidCleaner(object):
                     newTimes = [sub.start.to_time(), sub.end.to_time()]
                 newTimestampPairs.append(newTimes)
             else:
+                # if full subs were requested
                 if self.fullSubs:
-                    newSubs.append(sub)
+                    newFullSubs.append(sub)
                 prevNaughtySub = None
 
         newSubs.save(self.cleanSubsFileSpec)
+        newFullSubs.save(self.cleanFullSubsFileSpec)
 
         self.muteTimeList = []
         edlLines = []
@@ -395,6 +403,8 @@ class VidCleaner(object):
             if self.embedSubs and os.path.isfile(self.cleanSubsFileSpec):
                 outFileParts = os.path.splitext(self.outputVidFileSpec)
                 subsArgs = f" -i \"{self.cleanSubsFileSpec}\" -map 0 -map -0:s -map 1 -c:s {'mov_text' if outFileParts[1] == '.mp4' else 'srt'} -disposition:s:0 default -metadata:s:s:0 language={self.subsLang} "
+                if self.fullSubs and os.path.isfile(self.cleanFullSubsFileSpec):
+                    subsArgs += f" -i \"{self.cleanFullSubsFileSpec}\" -map -1:s -map 2 -c:s {'mov_text' if outFileParts[1] == '.mp4' else 'srt'} -disposition:s:1 default -metadata:s:s:1 language={self.subsLang} -metadata:s:s:1 handler=\"(Cleaned  Only)\""
             else:
                 subsArgs = " -sn "
             ffmpegCmd = (
@@ -408,6 +418,7 @@ class VidCleaner(object):
                 + self.outputVidFileSpec
                 + "\""
             )
+            print(sum(ffmpegCmd))
             ffmpegResult = delegator.run(ffmpegCmd, block=True)
             if (ffmpegResult.return_code != 0) or (not os.path.isfile(self.outputVidFileSpec)):
                 print(ffmpegCmd)
