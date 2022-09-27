@@ -17,6 +17,7 @@ TOPIC_ADD = os.path.join(MQTT_TOPIC, "to_clean")
 TOPIC_ERROR = os.path.join(MQTT_TOPIC, "error")
 
 DIR = os.environ.get("DIRECTORY", "/data")
+WAIT = float(os.environ.get("WAIT", 60))
 
 def connect_mqtt_client():
     """CONNECT TO MQTT Broker """
@@ -156,9 +157,8 @@ def Monitor():
         to_clean = check_new_clean(client, len(new_shows) > 0)
         # Do the cleaning!
         clean(client, to_clean)
-
         # wait
-        time.sleep(30*60)
+        time.sleep(WAIT*60)
 
 if __name__ == "__main__":
     Monitor()
