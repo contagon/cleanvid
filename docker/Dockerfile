@@ -19,5 +19,5 @@ RUN apk add --update --no-cache py3-pip ttf-liberation && \
 COPY --from=mwader/static-ffmpeg:latest /ffmpeg /usr/local/bin/
 COPY --from=mwader/static-ffmpeg:latest /ffprobe /usr/local/bin/
 
-ENTRYPOINT ["cleanvid"]
+ENTRYPOINT ["cleanvid_monitor"]
 CMD []

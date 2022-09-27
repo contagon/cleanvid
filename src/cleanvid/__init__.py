@@ -5,3 +5,4 @@ __author__ = "Seth Grover <mero.mero.guero@gmail.com>"
 __all__ = []
 
 from cleanvid.cleanvid import *
+from cleanvid.monitor import Monitor
