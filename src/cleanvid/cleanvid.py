@@ -406,7 +406,7 @@ class VidCleaner(object):
             if self.embedSubs and os.path.isfile(self.cleanSubsFileSpec):
                 outFileParts = os.path.splitext(self.outputVidFileSpec)
                 if self.fullSubs and os.path.isfile(self.cleanFullSubsFileSpec):
-                    subsArgs = f" -i \"{self.cleanSubsFileSpec}\" -i \"{self.cleanFullSubsFileSpec}\" -map 0 -map -0:s -map 1 -map 2 -c:s {'mov_text' if outFileParts[1] == '.mp4' else 'srt'} -disposition:s:0 forced -metadata:s:s:0 language={self.subsLang} -metadata:s:s:0 title=\"(Cleaned Profanity)\" -disposition:s:1 0 -metadata:s:s:1 language={self.subsLang} "
+                    subsArgs = f" -i \"{self.cleanSubsFileSpec}\" -i \"{self.cleanFullSubsFileSpec}\" -map 0 -map -0:s -map 1 -map 2 -c:s {'mov_text' if outFileParts[1] == '.mp4' else 'srt'} -disposition:s:0 forced -metadata:s:s:0 language={self.subsLang} -metadata:s:s:0 title=\"Cleaned Profanity\" -disposition:s:1 0 -metadata:s:s:1 language={self.subsLang} "
                 else:
                     subsArgs = f" -i \"{self.cleanSubsFileSpec}\" -map 0 -map -0:s -map 1 -c:s {'mov_text' if outFileParts[1] == '.mp4' else 'srt'} -disposition:s:0 forced -metadata:s:s:0 language={self.subsLang} "
             else:
