@@ -97,7 +97,7 @@ def clean(client, to_clean):
     for s in to_clean:
         # Find all files that need to be cleaned
         dir = os.path.join(DIR, s, "**/*")
-        files = [f for f in iglob(dir, recursive=True) if os.path.isfile(f) and "_clean" not in f]
+        files = [f for f in iglob(dir, recursive=True) if os.path.isfile(f) and "_clean" not in f and os.path.splitext(f)[1] != ".srt"]
         files = sorted(files)
 
         if len(files) > 0:
