@@ -6,10 +6,10 @@ from glob import iglob
 from cleanvid import VidCleaner, GetSubtitles
 import logging
 
-MQTT_ADDRESS = os.environ.get("MQTT_ADDRESS", "192.168.0.6")
+MQTT_ADDRESS = os.environ.get("MQTT_ADDRESS", "localhost")
 MQTT_PORT = os.environ.get("MQTT_PORT", 1883)
 MQTT_USER = os.environ.get("MQTT_USER", "")
-MQTT_PASSWORD = os.environ.get("MQTT_PASSWORD", "")
+MQTT_PASS = os.environ.get("MQTT_PASS", "")
 
 MQTT_TOPIC = os.environ.get("MQTT_TOPIC", "cleanvid")
 TOPIC_FOUND = os.path.join(MQTT_TOPIC, "found")
@@ -22,7 +22,7 @@ WAIT = float(os.environ.get("WAIT", 60))
 def connect_mqtt_client():
     """CONNECT TO MQTT Broker """
     client = paho.Client("clean_shows")
-    client.username_pw_set(MQTT_USER, password=MQTT_PASSWORD)
+    client.username_pw_set(MQTT_USER, password=MQTT_PASS)
     client.connect(MQTT_ADDRESS, MQTT_PORT)
 
     return client

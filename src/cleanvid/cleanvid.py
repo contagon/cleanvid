@@ -28,6 +28,9 @@ AUDIO_DEFAULT_PARAMS = '-c:a aac -ac 2 -ab 224k -ar 44100'
 SUBTITLE_DEFAULT_LANG = 'eng'
 PLEX_AUTO_SKIP_DEFAULT_CONFIG = '{"markers":{},"offsets":{},"tags":{},"allowed":{"users":[],"clients":[],"keys":[]},"blocked":{"users":[],"clients":[],"keys":[]},"clients":{},"mode":{}}'
 
+OSUBS_USER = os.environ.get("OSUBS_USER", "")
+OSUBS_PASS = os.environ.get("OSUBS_PASS", "")
+
 # thanks https://docs.python.org/3/library/itertools.html#recipes
 def pairwise(iterable):
     a, b = tee(iterable)
@@ -88,9 +91,12 @@ def GetSubtitles(vidFileSpec, srtLanguage, offline=False):
                 subFileParts = os.path.splitext(vidFileSpec)
                 subFileSpec = subFileParts[0] + "." + str(Language(srtLanguage)) + ".srt"
                 if not os.path.isfile(subFileSpec):
-                    video = Video.fromname(vidFileSpec)
-                    bestSubtitles = download_best_subtitles([video], {Language(srtLanguage)})
-                    savedSub = save_subtitles(video, [bestSubtitles[video][0]])
+                    # Download from open subtitles
+                    with providers.opensubtitles.OpenSubtitlesProvider(OSUBS_USER, OSUBS_PASS) as o:
+                        video = Video.fromname(vidFileSpec)
+                        sub = o.list_subtitles(video, {Language("eng")})[0]
+                        o.download_subtitle(sub)
+                        save_subtitles(video, [sub])
 
             if subFileSpec and (not os.path.isfile(subFileSpec)):
                 subFileSpec = ""
