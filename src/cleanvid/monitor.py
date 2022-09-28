@@ -133,7 +133,7 @@ def clean(client, to_clean):
                 os.remove(subs)
 
             except:
-                logging.info(f"{file_name} failed")
+                logging.warning(f"{file_name} failed")
                 errors.append(file_name)
 
     # Send error messages for HA to follow up on
@@ -142,7 +142,7 @@ def clean(client, to_clean):
 def Monitor():
     # Setup logging
     logging.basicConfig(
-         format='[%(asctime)s] %(message)s',
+         format='[%(asctime)s] %(levelname)-4s %(message)s',
          level=logging.INFO,
          datefmt='%Y-%m-%d %H:%M:%S')
 
