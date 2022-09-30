@@ -21,7 +21,7 @@ WAIT = float(os.environ.get("WAIT", 60))
 
 def connect_mqtt_client():
     """CONNECT TO MQTT Broker """
-    client = paho.Client("clean_shows")
+    client = paho.Client()
     client.username_pw_set(MQTT_USER, password=MQTT_PASS)
     client.connect(MQTT_ADDRESS, MQTT_PORT)
 
@@ -68,7 +68,8 @@ def check_new_shows(client):
     new_shows = all_shows - found_shows
     if len(new_shows) > 0:
         logging.info(f"Found new folders: {new_shows}")
-        client.publish(TOPIC_FOUND, json.dumps(list(new_shows)))
+        client.publish(TOPIC_FOUND, json.dumps(list(new_shows)), retain=True)
+        time.sleep(1)
 
     return new_shows
 
@@ -94,6 +95,7 @@ def check_new_clean(client, are_new_shows):
 def clean(client, to_clean):
     """Clean all folders found in the cleaning file"""
     errors = []
+    logging.info("Beginning cleaning")
     for s in to_clean:
         # Find all files that need to be cleaned
         dir = os.path.join(DIR, s, "**/*")
@@ -136,8 +138,12 @@ def clean(client, to_clean):
                 logging.warning(f"{file_name} failed")
                 errors.append(file_name)
 
-    # Send error messages for HA to follow up on
-    client.publish(TOPIC_ERROR, json.dumps(list(errors)))
+    logging.info("Finished cleaning")
+    if len(errors) > 0:
+        logging.warning(f"Had errors on files: {errors}")
+        # Send error messages for HA to follow up on
+        client.publish(TOPIC_ERROR, json.dumps(list(errors)), retain=True)
+        time.sleep(1)
 
 def Monitor():
     # Setup logging

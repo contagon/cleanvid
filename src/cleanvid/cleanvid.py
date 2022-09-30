@@ -82,7 +82,8 @@ def ExtractSubtitles(vidFileSpec, srtLanguage):
 
 ######## GetSubtitles #########################################################
 def GetSubtitles(vidFileSpec, srtLanguage, offline=False):
-    subFileSpec = ExtractSubtitles(vidFileSpec, srtLanguage)
+    # I found file subtitles were often VERY low quality, best to avoid altogether
+    subFileSpec = "" # ExtractSubtitles(vidFileSpec, srtLanguage)
     if not os.path.isfile(subFileSpec):
         if offline:
             subFileSpec = ""
@@ -90,13 +91,17 @@ def GetSubtitles(vidFileSpec, srtLanguage, offline=False):
             if os.path.isfile(vidFileSpec):
                 subFileParts = os.path.splitext(vidFileSpec)
                 subFileSpec = subFileParts[0] + "." + str(Language(srtLanguage)) + ".srt"
+
+                # Otherwise, download subtitles from online
                 if not os.path.isfile(subFileSpec):
-                    # Download from open subtitles
-                    with providers.opensubtitles.OpenSubtitlesProvider(OSUBS_USER, OSUBS_PASS) as o:
-                        video = Video.fromname(vidFileSpec)
-                        sub = o.list_subtitles(video, {Language("eng")})[0]
-                        o.download_subtitle(sub)
-                        save_subtitles(video, [sub])
+                    config = {}
+                    providers = ["podnapisi"]
+                    if OSUBS_PASS != "" and OSUBS_USER != "":
+                        config["opensubtitles"] = {"username": OSUBS_USER, "password": OSUBS_PASS}
+                        providers.append("opensubtitles")
+                    video = Video.fromname(vidFileSpec)
+                    bestSubtitles = download_best_subtitles([video], {Language(srtLanguage)}, providers=providers, provider_configs=config)
+                    savedSub = save_subtitles(video, [bestSubtitles[video][0]])
 
             if subFileSpec and (not os.path.isfile(subFileSpec)):
                 subFileSpec = ""
@@ -222,13 +227,13 @@ class VidCleaner(object):
 
     ######## del ##################################################################
     def __del__(self):
-        if (not os.path.isfile(self.outputVidFileSpec)) and (not self.unalteredVideo):
-            if os.path.isfile(self.cleanSubsFileSpec):
-                os.remove(self.cleanSubsFileSpec)
-            if os.path.isfile(self.cleanSubsFileSpec):
-                os.remove(self.cleanSubsFileSpec)
-            if os.path.isfile(self.edlFileSpec):
-                os.remove(self.edlFileSpec)
+        # if (not os.path.isfile(self.outputVidFileSpec)) and (not self.unalteredVideo):
+        if os.path.isfile(self.cleanFullSubsFileSpec):
+            os.remove(self.cleanFullSubsFileSpec)
+        if os.path.isfile(self.cleanSubsFileSpec):
+            os.remove(self.cleanSubsFileSpec)
+        if os.path.isfile(self.edlFileSpec):
+            os.remove(self.edlFileSpec)
         if os.path.isfile(self.tmpSubsFileSpec):
             os.remove(self.tmpSubsFileSpec)
         if os.path.isfile(self.assSubsFileSpec):
