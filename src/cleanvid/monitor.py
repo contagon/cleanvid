@@ -83,13 +83,17 @@ def check_new_clean(are_new_shows):
 def clean(to_clean):
     """Clean all folders found in the cleaning file"""
     errors = set()
+    old_errors = read_lines("errors.txt")
+
     logging.info("Beginning all cleaning")
     for s in to_clean:
         # Find all files that need to be cleaned
         dir = os.path.join(DIR, s, "**/*")
-        files = [f for f in iglob(dir, recursive=True) if os.path.isfile(f) 
-                                                        and "_clean" not in f 
-                                                        and os.path.splitext(f)[1] != ".srt"]
+        files = [f for f in iglob(dir, recursive=True) if os.path.isfile(f) # is a file
+                                                        and "_clean" not in f # hasn't already been cleaned
+                                                        and os.path.splitext(f)[1] != ".srt" # not a subtitle
+                                                        and os.path.basename(f) not in old_errors # hasn't failed previously
+                                                        ]
         files = sorted(files)
 
         if len(files) > 0:
@@ -128,7 +132,6 @@ def clean(to_clean):
 
                 # If not, download them & clean
                 except Exception as e:
-                    print(str(e))
                     logging.info(f"[{file_name}] Trying Downloaded Subtitles")
                     subs = GetSubtitles(f, 'eng', False)
                     if subs == "":
@@ -161,21 +164,17 @@ def clean(to_clean):
 
     logging.info("Finished cleaning")
     if len(errors) > 0:
-        old_errors = read_lines("errors.txt")
-        new_errors = errors - old_errors
-
-        if len(new_errors) > 0:
-            logging.warning(f"Had errors on files: {new_errors}")
-            # Send error messages for HA to follow up on
-            publish.single(
-                TOPIC_ERROR, 
-                payload=json.dumps(list(new_errors)),
-                qos=1,
-                hostname=MQTT_ADDRESS, 
-                port=MQTT_PORT,
-                auth={"username": MQTT_USER, "password": MQTT_PASS}
-            )
-            write_lines("errors.txt", errors|old_errors)
+        logging.warning(f"Had errors on files: {errors}")
+        # Send error messages for HA to follow up on
+        publish.single(
+            TOPIC_ERROR, 
+            payload=json.dumps(list(errors)),
+            qos=1,
+            hostname=MQTT_ADDRESS, 
+            port=MQTT_PORT,
+            auth={"username": MQTT_USER, "password": MQTT_PASS}
+        )
+        write_lines("errors.txt", errors|old_errors)
         
 
 def Monitor():
