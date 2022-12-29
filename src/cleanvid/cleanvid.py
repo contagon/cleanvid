@@ -82,29 +82,26 @@ def ExtractSubtitles(vidFileSpec, srtLanguage):
 
 ######## GetSubtitles #########################################################
 def GetSubtitles(vidFileSpec, srtLanguage, offline=False):
-    # I found file subtitles were often VERY low quality, best to avoid altogether
-    subFileSpec = "" # ExtractSubtitles(vidFileSpec, srtLanguage)
-    if not os.path.isfile(subFileSpec):
+    # Try embedded subtitiles
+    if os.path.isfile(vidFileSpec):
         if offline:
-            subFileSpec = ""
+            subFileSpec = ExtractSubtitles(vidFileSpec, srtLanguage)
+        # Otherwise download
         else:
-            if os.path.isfile(vidFileSpec):
-                subFileParts = os.path.splitext(vidFileSpec)
-                subFileSpec = subFileParts[0] + "." + str(Language(srtLanguage)) + ".srt"
+            subFileParts = os.path.splitext(vidFileSpec)
+            subFileSpec = subFileParts[0] + "." + str(Language(srtLanguage)) + ".srt"
 
-                # Otherwise, download subtitles from online
-                if not os.path.isfile(subFileSpec):
-                    config = {}
-                    providers = ["podnapisi"]
-                    if OSUBS_PASS != "" and OSUBS_USER != "":
-                        config["opensubtitles"] = {"username": OSUBS_USER, "password": OSUBS_PASS}
-                        providers.append("opensubtitles")
-                    video = Video.fromname(vidFileSpec)
-                    bestSubtitles = download_best_subtitles([video], {Language(srtLanguage)}, providers=providers, provider_configs=config)
-                    savedSub = save_subtitles(video, [bestSubtitles[video][0]])
+            config = {}
+            providers = ["podnapisi"]
+            if OSUBS_PASS != "" and OSUBS_USER != "":
+                config["opensubtitles"] = {"username": OSUBS_USER, "password": OSUBS_PASS}
+                providers.append("opensubtitles")
+            video = Video.fromname(vidFileSpec)
+            bestSubtitles = download_best_subtitles([video], {Language(srtLanguage)}, providers=providers, provider_configs=config)
+            savedSub = save_subtitles(video, [bestSubtitles[video][0]])
 
-            if subFileSpec and (not os.path.isfile(subFileSpec)):
-                subFileSpec = ""
+    if subFileSpec and (not os.path.isfile(subFileSpec)):
+        subFileSpec = ""
 
     return subFileSpec
 

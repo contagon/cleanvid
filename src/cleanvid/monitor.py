@@ -97,35 +97,65 @@ def clean(to_clean):
 
         # Iterate through them
         for f in files:
+            # This try is to see if we can get anything working
             try:
                 file_name = os.path.basename(f)
-                logging.info(f"[{file_name}] Subtitles")
-
-                # get subtitle and output files
-                subs = GetSubtitles(f, 'eng', False)
                 f_parts = os.path.splitext(f)
                 out = f_parts[0] + "_clean" + f_parts[1]
 
-                # Clean video!
-                cleaner = VidCleaner(
-                    iVidFileSpec=f,
-                    iSubsFileSpec=subs,
-                    oVidFileSpec=out,
-                    oSubsFileSpec=None,
-                    iSwearsFileSpec=os.path.join(DIR, "swears.txt"),
-                    embedSubs=True,
-                    fullSubs=True,
-                )
-                cleaner.CreateCleanSubAndMuteList()
-                logging.info(f"[{file_name}] Cleaning Video")
-                cleaner.MultiplexCleanVideo()
+                # This is to see if cleaning w/ embedded subtitles work
+                # (Sometimes they're empty)
+                try:
+                    logging.info(f"[{file_name}] Trying Embedded Subtitles")
+                    subs = GetSubtitles(f, 'eng', True)
+                    if subs == "":
+                        raise ValueError("No working embedded subtitles")
+
+                    # Clean video!
+                    cleaner = VidCleaner(
+                        iVidFileSpec=f,
+                        iSubsFileSpec=subs,
+                        oVidFileSpec=out,
+                        oSubsFileSpec=None,
+                        iSwearsFileSpec=os.path.join(DIR, "swears.txt"),
+                        embedSubs=True,
+                        fullSubs=True,
+                    )
+
+                    cleaner.CreateCleanSubAndMuteList()
+                    logging.info(f"[{file_name}] Cleaning Video")
+                    cleaner.MultiplexCleanVideo()
+
+                # If not, download them & clean
+                except Exception as e:
+                    print(str(e))
+                    logging.info(f"[{file_name}] Trying Downloaded Subtitles")
+                    subs = GetSubtitles(f, 'eng', False)
+                    if subs == "":
+                        raise ValueError("No working subtitles")
+
+                    # Clean video!
+                    cleaner = VidCleaner(
+                        iVidFileSpec=f,
+                        iSubsFileSpec=subs,
+                        oVidFileSpec=out,
+                        oSubsFileSpec=None,
+                        iSwearsFileSpec=os.path.join(DIR, "swears.txt"),
+                        embedSubs=True,
+                        fullSubs=True,
+                        swearsPadSec=5,
+                    )
+
+                    cleaner.CreateCleanSubAndMuteList()
+                    logging.info(f"[{file_name}] Cleaning Video")
+                    cleaner.MultiplexCleanVideo()
 
                 # Remove the old files, and extra subtitles
                 logging.info(f"[{file_name}] Removing extras")
                 os.remove(f)
                 os.remove(subs)
 
-            except:
+            except Exception as e:
                 logging.warning(f"[{file_name}] Failed")
                 errors.add(file_name)
 
